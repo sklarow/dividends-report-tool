@@ -1,6 +1,6 @@
-# 📊 Dividends Report Tool
+# 📊 Dividend Growth Tracker
 
-A modern, interactive web application for analyzing dividend investment data with comprehensive reporting, charts, and insights.
+A modern, interactive web application for analyzing Trading212 dividend investment data with comprehensive reporting, charts, and insights. Turn your Trading212 history into insights and charts.
 
 ## ✨ Features
 
@@ -21,12 +21,15 @@ A modern, interactive web application for analyzing dividend investment data wit
 
 #### **Cumulative Dividend Growth**
 - Line chart showing cumulative dividend growth over time
+- **Beautiful purple theme** with animated gradient styling
+- **Bold green value labels** on each data point with currency symbols
 - **Smart Dynamic Grouping** based on data span:
   - **≤ 12 months**: Monthly view (`MM/YYYY`)
   - **13-36 months**: Quarterly view (`Q YYYY`)
   - **37-72 months**: Semi-annual view (`MM/YYYY`)
   - **> 72 months**: Annual view (`YYYY`)
 - Prevents overcrowded x-axis labels for long time periods
+- Y-axis headroom prevents label cropping
 
 ### 📋 **Data Tables**
 
@@ -56,6 +59,7 @@ A modern, interactive web application for analyzing dividend investment data wit
 - Automatic currency symbol detection from CSV data
 - Supports major currencies: USD ($), EUR (€), GBP (£), JPY (¥), CAD (C$), AUD (A$), CHF, CNY, SEK, NZD, MXN, SGD, HKD, NOK, KRW, TRY, RUB, INR, BRL, ZAR
 - Fallback to currency code if symbol not found
+
 
 
 ## 📄 CSV Format
@@ -98,62 +102,29 @@ dividends-report-tool/
 
 ## 🛠️ Technical Details
 
-### **Architecture**
-- **Frontend**: Pure HTML, CSS, JavaScript (no frameworks)
-- **CSV Parsing**: Papa Parse library
-- **Charts**: Chart.js with datalabels plugin
-- **Styling**: Modern CSS with responsive design
+- **Pure HTML/CSS/JavaScript** - No frameworks required
+- **Client-side processing** - All data stays in your browser
+- **Chart.js** for interactive charts
+- **Papa Parse** for CSV processing
 
-### **Key Features**
-- **Client-side processing**: All data processing happens in the browser
-- **No server required**: Works entirely in the browser
-- **Responsive design**: Adapts to different screen sizes
-- **Modular code**: Separated into `app.js` and `utils.js` for maintainability
+## 🚀 Quick Start
 
-### **Browser Compatibility**
-- Chrome 60+
-- Firefox 55+
-- Safari 12+
-- Edge 79+
+### **Option 1: GitHub Pages (Recommended)**
+1. Visit: [https://sklarow.github.io/dividends-report-tool](https://sklarow.github.io/dividends-report-tool)
+2. Upload your Trading212 dividend CSV file
+3. View your analysis instantly
 
-## 🔧 Customization
-
-### **Adding New Currencies**
-Edit `js/utils.js` and add new entries to the `currencySymbolFrom` function:
-
-```javascript
-const map = {
-  "USD": "$",
-  "EUR": "€",
-  "GBP": "£",
-  // Add your currency here
-  "NEW_CURRENCY": "NEW_SYMBOL",
-};
-```
-
-### **Modifying Chart Grouping**
-Edit the grouping logic in `js/app.js` `updateGrowthChart()` function:
-
-```javascript
-if (totalMonths <= 12) {
-  groupSize = 1; // Monthly
-} else if (totalMonths <= 36) {
-  groupSize = 3; // Quarterly
-} // ... modify thresholds as needed
-```
-
-### **Styling Changes**
-All styles are in `styles.css`. Key classes:
-- `.overview-card`: Payment overview styling
-- `.chart-card`: Chart container styling
-- `.value-positive`: Green value styling
-- `.pagination-bar`: Pagination controls
+### **Option 2: Local Development**
+1. Clone: `git clone https://github.com/sklarow/dividends-report-tool.git`
+2. Serve locally: `python -m http.server 8000` (or any web server)
+3. Open: `http://localhost:8000`
 
 ## 🐛 Troubleshooting
 
 ### **CSV File Not Loading**
 - **Issue**: "CORS policy" error in browser console
-- **Solution**: Serve files through a web server (see Installation section)
+- **Solution**: Deploy to GitHub Pages or serve files through a web server (see Installation section)
+- **GitHub Pages**: Automatically fixes CORS issues when deployed
 
 ### **Charts Not Rendering**
 - **Issue**: Charts appear blank
@@ -181,10 +152,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-If you encounter any issues or have questions:
-1. Check the [Troubleshooting](#-troubleshooting) section
-2. Search existing [Issues](https://github.com/sklarow/dividends-report-tool/issues)
-3. Create a new issue with detailed information
+Found an issue? [Create a GitHub issue](https://github.com/sklarow/dividends-report-tool/issues) with details.
+
 
 ## 🎯 Roadmap
 
@@ -194,6 +163,10 @@ If you encounter any issues or have questions:
 - [ ] Multiple portfolio support
 - [ ] Dividend yield calculations
 - [ ] Performance metrics (IRR, CAGR)
+
+## ⚠️ Disclaimer
+
+**Disclaimer:** This is an independent project made by [Allan Sklarow](https://linkedin.com/in/sklarow) and is not affiliated with or endorsed by Trading 212. Your files remain private: all processing is done locally in your browser, and no data is saved or transmitted. [View the source code on GitHub](https://github.com/sklarow/dividends-report-tool)
 
 ---
 
