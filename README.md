@@ -8,9 +8,14 @@ A modern, interactive web application for analyzing Trading212 dividend investme
 - **First Payment Date**: When your dividend history begins
 - **Last Payment Date**: Most recent dividend received
 - **Total Payments Count**: Number of dividend transactions
-- **Total Amount Received**: Cumulative dividends (displayed in green)
+- **Total Amount Received (All time)**: Cumulative dividends
+- **Total Amount Received (last 365 days)**: Recent year performance
+- **Total Amount Received (last 30 days)**: Recent month performance
 - **Average Payment Size**: Mean dividend amount per transaction
-- **Largest Single Payment**: Biggest dividend with ticker, company name, and date
+- **Top Dividend Contributor**: Ticker with highest total amount received
+- **Smallest Dividend Contributor**: Ticker with lowest total amount received
+- **Largest Single Payment**: Biggest individual dividend with ticker, company name, and date
+- **Most Payments**: Ticker with highest number of dividend payments
 
 ### 📊 **Interactive Charts**
 
