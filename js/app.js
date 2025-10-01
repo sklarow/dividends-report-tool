@@ -733,12 +733,12 @@ function initGrowthChartIfReady() {
       datasets: [{ 
         label: 'Cumulative', 
         data: [], 
-        borderColor: 'rgba(79,140,255,0.9)', 
-        backgroundColor: 'rgba(79,140,255,0.15)', 
+        borderColor: 'rgba(147,51,234,0.9)', 
+        backgroundColor: 'rgba(147,51,234,0.15)', 
         fill: true, 
         tension: 0.25,
-        pointBackgroundColor: 'rgba(79,140,255,0.9)',
-        pointBorderColor: 'rgba(79,140,255,0.9)',
+        pointBackgroundColor: 'rgba(147,51,234,0.9)',
+        pointBorderColor: 'rgba(147,51,234,0.9)',
         pointRadius: 4,
         pointHoverRadius: 6
       }] 
@@ -749,9 +749,22 @@ function initGrowthChartIfReady() {
       layout: { padding: { top: 10, right: 8, bottom: 8, left: 8 } },
       scales: {
         x: { grid: { display: false } },
-        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' } },
+        y: { 
+          beginAtZero: true, 
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          suggestedMax: 0 // Will be updated dynamically
+        },
       },
-      plugins: { legend: { display: false } },
+      plugins: { 
+        legend: { display: false },
+        datalabels: {
+          color: '#22c55e',
+          anchor: 'end',
+          align: 'end',
+          formatter: (v) => `€${Number(v).toFixed(2)}`,
+          font: { weight: '700' }
+        }
+      },
     },
   });
 }
@@ -889,13 +902,22 @@ function updateGrowthChart() {
   growthChart.data.labels = labels;
   growthChart.data.datasets[0].data = cumulative;
   
-  // Fix the callback to avoid circular reference
+  // Ensure Y axis has headroom so top labels are not cropped
+  const maxCumulative = Math.max(...cumulative);
+  growthChart.options.scales.y.suggestedMax = Number((maxCumulative * 1.15).toFixed(2));
+  
+  // Update Y-axis ticks to show currency
   if (growthChart.options.scales && growthChart.options.scales.y) {
     growthChart.options.scales.y.ticks = {
       callback: function(value) {
         return `${symbol ? symbol + ' ' : ''}${Number(value).toFixed(0)}`;
       }
     };
+  }
+  
+  // Update datalabels with currency symbol
+  if (window.ChartDataLabels && growthChart.options.plugins.datalabels) {
+    growthChart.options.plugins.datalabels.formatter = (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(2)}`;
   }
   
   growthChart.update();
