@@ -1055,14 +1055,7 @@ function updateGrowthChart() {
   let running = 0;
   const cumulative = sums.map((n) => { running += n; return Number(running.toFixed(2)); });
   
-  console.log('Growth chart data:', { 
-    totalMonths, 
-    groupSize, 
-    labelFormat, 
-    labels, 
-    cumulative, 
-    sums 
-  });
+
   
   growthChart.data.labels = labels;
   growthChart.data.datasets[0].data = cumulative;
