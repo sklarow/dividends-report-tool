@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="./styles.css" />
     <!-- Papa Parse for client-side CSV parsing -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
+    <!-- Chart.js for chart rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
     <script src="./js/utils.js" defer></script>
     <script src="./js/app.js" defer></script>
   </head>
@@ -41,6 +43,16 @@
           <div class="metric"><div class="label">Largest payment</div><div id="ov-max" class="value">—</div></div>
         </div>
       </section>
+      <section class="chart-card">
+        <div class="overview-header">
+          <span class="overview-emoji" aria-hidden="true">📈</span>
+          <h2>Payments per month</h2>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="payments-chart" height="140"></canvas>
+        </div>
+      </section>
+
       <details class="accordion" open>
         <summary>All dividend transactions</summary>
         <section class="table-card">

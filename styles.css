@@ -253,6 +253,15 @@ main.container { padding: 24px 16px 40px; }
   .overview-grid { grid-template-columns: 1fr; }
 }
 
+/* Chart card */
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin: 16px 0;
+}
+.chart-wrapper { padding: 12px 14px 16px; }
+
 @media (max-width: 640px) {
   .app-header h1 { font-size: 22px; }
   .styled-table thead th, .styled-table tbody td { padding: 12px; }

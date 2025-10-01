@@ -74,6 +74,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (sumPrev) sumPrev.addEventListener("click", () => { changeSummaryPage(-1); });
   if (sumNext) sumNext.addEventListener("click", () => { changeSummaryPage(1); });
+
+  // Initialize chart (Chart.js is deferred; guard availability)
+  initChartIfReady();
 });
 
 /**
@@ -321,6 +324,7 @@ function render() {
   renderHeaderInteractions();
   renderPagination();
   renderOverview();
+  updateChart();
 }
 
 // ===== Summary table (by ticker) =====
@@ -585,6 +589,99 @@ function renderOverview() {
 function setOverviewText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
+}
+
+// ===== Payments per month chart =====
+let paymentsChart = null;
+
+function initChartIfReady() {
+  if (!window.Chart) return;
+  const ctx = document.getElementById('payments-chart');
+  if (!ctx) return;
+  if (paymentsChart) return;
+  paymentsChart = new window.Chart(ctx, {
+    type: 'bar',
+    data: { labels: [], datasets: [{ label: 'Payments', data: [], backgroundColor: 'rgba(79, 140, 255, 0.6)' }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { callback: (v) => v } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+function updateChart() {
+  initChartIfReady();
+  if (!paymentsChart) return;
+  const rows = tableState.rows;
+  if (!rows || rows.length === 0) {
+    paymentsChart.data.labels = [];
+    paymentsChart.data.datasets[0].data = [];
+    paymentsChart.update();
+    return;
+  }
+
+  // Determine currency for y formatting
+  const currency = rows.find((r) => r['_Currency'])?._Currency || '';
+  const symbol = window.Utils.currencySymbolFrom(currency);
+
+  // Build month buckets from first payment month to current month
+  function parseDisplayDate(s) {
+    const m = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    if (!m) return NaN;
+    return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5])).getTime();
+  }
+  const timestamps = rows
+    .map((r) => parseDisplayDate(r['Payment Date']))
+    .filter((t) => Number.isFinite(t))
+    .sort((a, b) => a - b);
+  if (timestamps.length === 0) return;
+
+  const first = new Date(timestamps[0]);
+  const today = new Date();
+  const labels = [];
+  const keyToIndex = new Map();
+  const sums = [];
+
+  function keyFor(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+  function labelFor(d) {
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${mm}/${yyyy}`;
+  }
+
+  // Iterate months from first to today (inclusive)
+  const cursor = new Date(first.getFullYear(), first.getMonth(), 1);
+  const end = new Date(today.getFullYear(), today.getMonth(), 1);
+  while (cursor <= end) {
+    const key = keyFor(cursor);
+    keyToIndex.set(key, labels.length);
+    labels.push(labelFor(cursor));
+    sums.push(0);
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+
+  // Sum values into month buckets
+  for (const r of rows) {
+    const t = parseDisplayDate(r['Payment Date']);
+    if (!Number.isFinite(t)) continue;
+    const d = new Date(t);
+    const key = keyFor(d);
+    const idx = keyToIndex.get(key);
+    if (idx == null) continue;
+    const amt = window.Utils.numberFromMixedString(r['Value']);
+    if (Number.isNaN(amt)) continue;
+    sums[idx] += amt;
+  }
+
+  paymentsChart.data.labels = labels;
+  paymentsChart.data.datasets[0].data = sums.map((n) => Number(n.toFixed(2)));
+  paymentsChart.options.scales.y.ticks.callback = (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(0)}`;
+  paymentsChart.update();
 }
 
 
