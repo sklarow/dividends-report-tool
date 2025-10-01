@@ -36,8 +36,8 @@ Dividend (Dividend),2025-10-15 10:30:00,US1912161007,KO,Coca-Cola Co,1.000000000
 const tableState = {
   rawRows: [],
   rows: [],
-  sortKey: null,
-  sortDir: "asc",
+  sortKey: "Payment Date",
+  sortDir: "desc",
   page: 1,
   pageSize: 10,
 };
