@@ -528,6 +528,7 @@ function renderOverview() {
     setOverviewText('ov-total-30', '—');
     setOverviewText('ov-total-365', '—');
     setOverviewText('ov-avg', '—');
+    setOverviewText('ov-avg-month', '—');
     setOverviewText('ov-max', '—');
     setOverviewText('ov-most', '—');
     setOverviewText('ov-biggest', '—');
@@ -649,6 +650,15 @@ function renderOverview() {
   }
   
   setOverviewText('ov-avg', count > 0 ? money(avg) : '—');
+  
+  // Average payment per month (last 365 days / 12)
+  const avgPerMonth = totalAmount365 / 12;
+  const avgMonthEl = document.getElementById('ov-avg-month');
+  if (avgMonthEl) {
+    avgMonthEl.textContent = totalAmount365 > 0 ? money(avgPerMonth) : '—';
+    avgMonthEl.classList.toggle('value-positive', totalAmount365 > 0);
+  }
+  
   if (maxPayment.row) {
     const ticker = maxPayment.row['Ticker'] || '';
     const name = maxPayment.row['Ticker Name'] || '';
