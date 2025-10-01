@@ -1,5 +1,9 @@
-// Minimal helpers for rendering and parsing
+// Dividend table application: parsing, state, rendering, sorting, pagination
 
+/**
+ * Columns expected for rendering.
+ * @type {readonly string[]}
+ */
 const REQUIRED_COLUMNS = [
   "Ticker",
   "Ticker Name",
@@ -8,14 +12,20 @@ const REQUIRED_COLUMNS = [
   "Value"
 ];
 
+/**
+ * Inline fallback sample when local fetch is not available.
+ * @type {string}
+ */
 const INLINE_SAMPLE_CSV = `Ticker,Ticker Name,Number of Shares,Payment Date,Value\nAAPL,Apple Inc,10,2025-08-15,5.40\nMSFT,Microsoft Corp,8,2025-08-20,4.16\nV,Visa Inc,5,2025-09-02,2.85\nKO,Coca-Cola Co,20,2025-09-10,3.40`;
 
-// In-memory table state
+/**
+ * Global table state for sorting and pagination.
+ */
 const tableState = {
   rawRows: [],
   rows: [],
   sortKey: null,
-  sortDir: "asc", // or "desc"
+  sortDir: "asc",
   page: 1,
   pageSize: 10,
 };
@@ -42,59 +52,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (nextBtn) nextBtn.addEventListener("click", () => { changePage(1); });
 });
 
-function formatDateDisplay(input) {
-  const value = String(input ?? "").trim();
-  if (value === "") return "";
-
-  // Try common formats: YYYY-MM-DD, YYYY-MM-DD HH:MM, YYYY-MM-DD HH:MM:SS
-  const ymd = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/;
-  const ymdHm = /^([0-9]{4})-([0-9]{2})-([0-9]{2})[ T]([0-9]{2}):([0-9]{2})(?::([0-9]{2}))?$/;
-
-  let year, month, day, hour = 0, minute = 0;
-
-  let m = value.match(ymd);
-  if (m) {
-    year = Number(m[1]);
-    month = Number(m[2]);
-    day = Number(m[3]);
-  } else {
-    m = value.match(ymdHm);
-    if (m) {
-      year = Number(m[1]);
-      month = Number(m[2]);
-      day = Number(m[3]);
-      hour = Number(m[4]);
-      minute = Number(m[5]);
-    }
-  }
-
-  function pad2(n) { return String(n).padStart(2, "0"); }
-
-  if (year && month && day) {
-    // Construct using local time to avoid timezone shifts
-    const d = new Date(year, month - 1, day, hour, minute, 0, 0);
-    const dd = pad2(d.getDate());
-    const mm = pad2(d.getMonth() + 1);
-    const yyyy = d.getFullYear();
-    const hh = pad2(d.getHours());
-    const min = pad2(d.getMinutes());
-    return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
-  }
-
-  // Fallback: try Date parsing; if invalid, return original
-  const d = new Date(value);
-  if (!Number.isNaN(d.getTime())) {
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
-  }
-
-  return value;
-}
-
+/**
+ * Handle file input selection and trigger CSV parsing.
+ * @param {Event} event
+ */
 function onFileSelected(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
@@ -105,19 +66,24 @@ function onFileSelected(event) {
   reader.readAsText(file);
 }
 
+/**
+ * Load a sample CSV from the project if available; otherwise use inline.
+ */
 async function loadSampleCsv() {
   try {
-    // Try fetching a sample from project root
     const response = await fetch("./dividends.csv", { cache: "no-store" });
     if (!response.ok) throw new Error("Sample CSV not found");
     const text = await response.text();
     parseCsvAndRender(text);
   } catch (err) {
-    // Fallback to inline sample to avoid local file:// CORS issues
     parseCsvAndRender(INLINE_SAMPLE_CSV);
   }
 }
 
+/**
+ * Parse CSV text with PapaParse, normalize keys, and render table state.
+ * @param {string} csvText
+ */
 function parseCsvAndRender(csvText) {
   if (!window.Papa) {
     alert("CSV parser not loaded");
@@ -142,38 +108,26 @@ function parseCsvAndRender(csvText) {
   render();
 }
 
+/**
+ * Normalize a raw CSV row to the app's expected keys.
+ * @param {Record<string, any>} row
+ * @returns {Record<string, string|number>}
+ */
 function normalizeRowKeys(row) {
-  // Accept minor header variations commonly seen in exports
-  const map = buildHeaderMap(Object.keys(row));
+  const map = window.Utils.buildHeaderMap(Object.keys(row));
   return {
     "Ticker": row[map.ticker] ?? "",
     "Ticker Name": row[map.name] ?? "",
     "Number of Shares": row[map.shares] ?? "",
-    "Payment Date": formatDateDisplay(row[map.date] ?? ""),
+    "Payment Date": window.Utils.formatDateDisplay(row[map.date] ?? ""),
     "Value": row[map.value] ?? "",
   };
 }
 
-function buildHeaderMap(headers) {
-  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
-  const candidates = headers.map((h) => ({ raw: h, key: norm(h) }));
-
-  function find(...keys) {
-    const set = new Set(keys.map(norm));
-    const hit = candidates.find((c) => set.has(c.key));
-    return hit ? hit.raw : undefined;
-  }
-
-  return {
-    ticker: find("ticker", "symbol"),
-    name: find("ticker name", "name", "company", "instrument"),
-    shares: find("number of shares", "no. of shares", "shares"),
-    // Some exports use a separate Time column; treat it as the date-time
-    date: find("payment date", "date", "time"),
-    value: find("value", "amount", "total", "total (gbp)", "gross amount"),
-  };
-}
-
+/**
+ * Render a page of rows into the table body.
+ * @param {Array<Record<string, any>>} rows
+ */
 function renderTable(rows) {
   const tbody = document.querySelector("#dividends-table tbody");
   tbody.innerHTML = "";
@@ -195,7 +149,7 @@ function renderTable(rows) {
       const td = document.createElement("td");
       let value = row[col] ?? "";
       if (col === "Value" && typeof value === "string" && value !== "") {
-        const num = Number(String(value).replace(/[^0-9.-]/g, ""));
+        const num = window.Utils.numberFromMixedString(value);
         if (!Number.isNaN(num)) value = num.toFixed(2);
       }
       td.textContent = value;
@@ -205,6 +159,9 @@ function renderTable(rows) {
   }
 }
 
+/**
+ * Apply current sort order on raw rows to produce display rows.
+ */
 function applySort() {
   const { sortKey, sortDir } = tableState;
   const rows = [...tableState.rawRows];
@@ -216,7 +173,6 @@ function applySort() {
 
   function toComparable(col, val) {
     if (col === "Payment Date") {
-      // convert dd/mm/yyyy HH:MM to timestamp for sorting
       const m = String(val).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
       if (m) {
         const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5]));
@@ -224,7 +180,7 @@ function applySort() {
       }
     }
     if (col === "Number of Shares" || col === "Value") {
-      const num = Number(String(val).replace(/[^0-9.-]/g, ""));
+      const num = window.Utils.numberFromMixedString(val);
       if (!Number.isNaN(num)) return num;
     }
     const s = String(val || "").toLowerCase();
@@ -241,6 +197,9 @@ function applySort() {
   tableState.rows = rows;
 }
 
+/**
+ * Attach and update sort header interactions and indicators.
+ */
 function renderHeaderInteractions() {
   const ths = document.querySelectorAll('#dividends-table thead th.sortable');
   ths.forEach((th) => {
@@ -261,15 +220,13 @@ function renderHeaderInteractions() {
     th._sortHandler = handler;
     th.addEventListener("click", handler);
 
-    // Add visual indicator
-    let label = th.querySelector('.sort-label');
-    if (!label) {
+    let indicator = th.querySelector('.sort-indicator');
+    if (!indicator) {
       const span = document.createElement('span');
       span.className = 'sort-indicator';
       th.appendChild(span);
     }
   });
-  // Update indicator text
   ths.forEach((th) => {
     const span = th.querySelector('.sort-indicator');
     if (!span) return;
@@ -282,6 +239,10 @@ function renderHeaderInteractions() {
   });
 }
 
+/**
+ * Change the current page by a delta (-1 or +1 typically) and re-render.
+ * @param {number} delta
+ */
 function changePage(delta) {
   const total = tableState.rows.length;
   const lastPage = Math.max(1, Math.ceil(total / tableState.pageSize));
@@ -292,6 +253,9 @@ function changePage(delta) {
   }
 }
 
+/**
+ * Render pagination bar state (range and button enablement).
+ */
 function renderPagination() {
   const total = tableState.rows.length;
   const lastPage = Math.max(1, Math.ceil(total / tableState.pageSize));
@@ -306,8 +270,10 @@ function renderPagination() {
   if (next) next.disabled = tableState.page >= lastPage;
 }
 
+/**
+ * Render function driving the table body, header indicators, and pagination.
+ */
 function render() {
-  // Determine slice
   const total = tableState.rows.length;
   const startIdx = (tableState.page - 1) * tableState.pageSize;
   const endIdx = Math.min(total, startIdx + tableState.pageSize);
@@ -317,6 +283,5 @@ function render() {
   renderHeaderInteractions();
   renderPagination();
 }
-
 
 
