@@ -30,6 +30,16 @@ const tableState = {
   pageSize: 10,
 };
 
+// Aggregated by ticker table state
+const summaryState = {
+  rawRows: [],
+  rows: [],
+  sortKey: null,
+  sortDir: "asc",
+  page: 1,
+  pageSize: 10,
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("file-input");
   input.addEventListener("change", onFileSelected);
@@ -50,6 +60,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (prevBtn) prevBtn.addEventListener("click", () => { changePage(-1); });
   if (nextBtn) nextBtn.addEventListener("click", () => { changePage(1); });
+
+  // Summary table controls
+  const sumPageSize = document.getElementById("summary-page-size-select");
+  const sumPrev = document.getElementById("summary-prev-page");
+  const sumNext = document.getElementById("summary-next-page");
+  if (sumPageSize) {
+    sumPageSize.addEventListener("change", () => {
+      summaryState.pageSize = Number(sumPageSize.value);
+      summaryState.page = 1;
+      renderSummary();
+    });
+  }
+  if (sumPrev) sumPrev.addEventListener("click", () => { changeSummaryPage(-1); });
+  if (sumNext) sumNext.addEventListener("click", () => { changeSummaryPage(1); });
 });
 
 /**
@@ -106,6 +130,12 @@ function parseCsvAndRender(csvText) {
   tableState.page = 1;
   applySort();
   render();
+
+  // Build and render summary table
+  summaryState.rawRows = buildSummaryRows(normalizedRows);
+  summaryState.page = 1;
+  applySummarySort();
+  renderSummary();
 }
 
 /**
@@ -291,6 +321,168 @@ function render() {
   renderHeaderInteractions();
   renderPagination();
   renderOverview();
+}
+
+// ===== Summary table (by ticker) =====
+
+/**
+ * Build aggregated rows per ticker with totals and averages.
+ * @param {Array<Record<string, any>>} rows
+ * @returns {Array<Record<string, any>>}
+ */
+function buildSummaryRows(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    const ticker = r['Ticker'] || '';
+    const name = r['Ticker Name'] || '';
+    const num = window.Utils.numberFromMixedString(r['Value']);
+    if (Number.isNaN(num)) continue;
+    if (!map.has(ticker)) {
+      map.set(ticker, { ticker, name, count: 0, total: 0 });
+    }
+    const ref = map.get(ticker);
+    ref.count += 1;
+    ref.total += num;
+  }
+  const currency = rows.find((r) => r['_Currency'])?._Currency || '';
+  const symbol = window.Utils.currencySymbolFrom(currency);
+  const fmt = (n) => `${symbol ? symbol + ' ' : ''}${n.toFixed(2)}`;
+  const out = [];
+  for (const { ticker, name, count, total } of map.values()) {
+    const avg = count > 0 ? total / count : 0;
+    out.push({
+      'Ticker': ticker,
+      'Ticker Name': name,
+      'Number of Payments': count,
+      'Total Payments': fmt(total),
+      'Average Payment': fmt(avg),
+    });
+  }
+  return out;
+}
+
+function applySummarySort() {
+  const { sortKey, sortDir } = summaryState;
+  const rows = [...summaryState.rawRows];
+  if (!sortKey) { summaryState.rows = rows; return; }
+  const dir = sortDir === 'desc' ? -1 : 1;
+
+  function toComparable(col, val) {
+    if (col === 'Number of Payments') {
+      const n = Number(val);
+      return Number.isNaN(n) ? -Infinity : n;
+    }
+    if (col === 'Total Payments' || col === 'Average Payment') {
+      return window.Utils.numberFromMixedString(val);
+    }
+    return String(val || '').toLowerCase();
+  }
+
+  rows.sort((a, b) => {
+    const av = toComparable(sortKey, a[sortKey]);
+    const bv = toComparable(sortKey, b[sortKey]);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+  summaryState.rows = rows;
+}
+
+function renderSummaryHeaderInteractions() {
+  const ths = document.querySelectorAll('#summary-table thead th.sortable');
+  ths.forEach((th) => {
+    th.removeEventListener('click', th._sortHandler || (() => {}));
+    const handler = () => {
+      const key = th.getAttribute('data-key');
+      if (!key) return;
+      if (summaryState.sortKey === key) {
+        summaryState.sortDir = summaryState.sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        summaryState.sortKey = key;
+        summaryState.sortDir = 'asc';
+      }
+      summaryState.page = 1;
+      applySummarySort();
+      renderSummary();
+    };
+    th._sortHandler = handler;
+    th.addEventListener('click', handler);
+
+    let indicator = th.querySelector('.sort-indicator');
+    if (!indicator) {
+      const span = document.createElement('span');
+      span.className = 'sort-indicator';
+      th.appendChild(span);
+    }
+  });
+  ths.forEach((th) => {
+    const span = th.querySelector('.sort-indicator');
+    if (!span) return;
+    const key = th.getAttribute('data-key');
+    if (summaryState.sortKey === key) {
+      span.textContent = summaryState.sortDir === 'asc' ? '▲' : '▼';
+    } else {
+      span.textContent = '';
+    }
+  });
+}
+
+function changeSummaryPage(delta) {
+  const total = summaryState.rows.length;
+  const lastPage = Math.max(1, Math.ceil(total / summaryState.pageSize));
+  const next = Math.min(lastPage, Math.max(1, summaryState.page + delta));
+  if (next !== summaryState.page) {
+    summaryState.page = next;
+    renderSummary();
+  }
+}
+
+function renderSummaryPagination() {
+  const total = summaryState.rows.length;
+  const lastPage = Math.max(1, Math.ceil(total / summaryState.pageSize));
+  const start = total === 0 ? 0 : (summaryState.page - 1) * summaryState.pageSize + 1;
+  const end = Math.min(total, summaryState.page * summaryState.pageSize);
+  const info = document.getElementById('summary-page-info');
+  const prev = document.getElementById('summary-prev-page');
+  const next = document.getElementById('summary-next-page');
+  if (info) info.textContent = `${start}-${end} of ${total}`;
+  if (prev) prev.disabled = summaryState.page <= 1;
+  if (next) next.disabled = summaryState.page >= lastPage;
+}
+
+function renderSummaryTable(rows) {
+  const tbody = document.querySelector('#summary-table tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!rows || rows.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.textContent = 'No rows to display';
+    td.style.color = 'var(--muted)';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+  for (const row of rows) {
+    const tr = document.createElement('tr');
+    for (const key of ['Ticker', 'Ticker Name', 'Number of Payments', 'Total Payments', 'Average Payment']) {
+      const td = document.createElement('td');
+      td.textContent = row[key] ?? '';
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+}
+
+function renderSummary() {
+  const total = summaryState.rows.length;
+  const startIdx = (summaryState.page - 1) * summaryState.pageSize;
+  const endIdx = Math.min(total, startIdx + summaryState.pageSize);
+  const pageRows = summaryState.rows.slice(startIdx, endIdx);
+  renderSummaryTable(pageRows);
+  renderSummaryHeaderInteractions();
+  renderSummaryPagination();
 }
 
 /**

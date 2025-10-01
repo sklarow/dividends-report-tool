@@ -77,6 +77,43 @@
           </div>
         </section>
       </details>
+
+      <details class="accordion" open>
+        <summary>Total payments by ticker</summary>
+        <section class="table-card">
+          <div class="table-wrapper">
+            <table id="summary-table" class="styled-table">
+              <thead>
+                <tr>
+                  <th data-key="Ticker" class="sortable">Ticker</th>
+                  <th data-key="Ticker Name" class="sortable">Ticker Name</th>
+                  <th data-key="Number of Payments" class="sortable">Number of Payments</th>
+                  <th data-key="Total Payments" class="sortable">Total Payments</th>
+                  <th data-key="Average Payment" class="sortable">Average Payment</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Aggregated rows injected here -->
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination-bar">
+            <div class="page-size">
+              <label for="summary-page-size-select">Rows per page</label>
+              <select id="summary-page-size-select">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div class="pager">
+              <button id="summary-prev-page" class="pager-btn" aria-label="Previous page">Prev</button>
+              <span id="summary-page-info" class="page-info"></span>
+              <button id="summary-next-page" class="pager-btn" aria-label="Next page">Next</button>
+            </div>
+          </div>
+        </section>
+      </details>
     </main>
 
     <footer class="app-footer">
