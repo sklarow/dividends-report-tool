@@ -609,9 +609,10 @@ function initChartIfReady() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { top: 12, right: 8, bottom: 8, left: 8 } },
       scales: {
         x: { grid: { display: false } },
-        y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { callback: (v) => v } },
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { callback: (v) => v } },
       },
       plugins: {
         legend: { display: false },
@@ -688,6 +689,9 @@ function updateChart() {
   paymentsChart.data.labels = labels;
   paymentsChart.data.datasets[0].data = sums.map((n) => Number(n.toFixed(2)));
   paymentsChart.options.scales.y.ticks.callback = (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(0)}`;
+  // Ensure Y axis has headroom so top labels are not cropped
+  const maxSum = Math.max(...sums);
+  paymentsChart.options.scales.y.suggestedMax = Number((maxSum * 1.15).toFixed(2));
   // Add bold green value labels on top of bars
   // Only set datalabels if plugin is available
   if (window.ChartDataLabels) {
