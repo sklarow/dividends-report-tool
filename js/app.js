@@ -466,9 +466,15 @@ function renderSummaryTable(rows) {
   }
   for (const row of rows) {
     const tr = document.createElement('tr');
-    for (const key of ['Ticker', 'Ticker Name', 'Number of Payments', 'Total Payments', 'Average Payment']) {
+    for (const key of ['Ticker', 'Ticker Name', 'Number of Payments', 'Average Payment', 'Total Payments']) {
       const td = document.createElement('td');
-      td.textContent = row[key] ?? '';
+      const val = row[key] ?? '';
+      if (key === 'Total Payments') {
+        td.textContent = val;
+        td.classList.add('value-positive');
+      } else {
+        td.textContent = val;
+      }
       tr.appendChild(td);
     }
     tbody.appendChild(tr);

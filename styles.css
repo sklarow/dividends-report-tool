@@ -224,7 +224,7 @@ main.container { padding: 24px 16px 40px; }
 .metric .label { color: var(--muted); font-size: 13px; }
 .metric .value { font-size: 18px; font-weight: 600; margin-top: 6px; }
 
-.value-positive { color: #22c55e; }
+.value-positive { color: #22c55e; font-weight: 700; }
 
 .value-multiline {
   display: flex;
