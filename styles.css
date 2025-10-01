@@ -178,6 +178,18 @@ main.container { padding: 24px 16px 40px; }
   color: var(--muted);
 }
 
+.app-footer a {
+  color: #22c55e;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.app-footer a:hover {
+  color: #16a34a;
+  text-decoration: underline;
+}
+
 /* Accordion styling */
 .accordion {
   background: transparent;
