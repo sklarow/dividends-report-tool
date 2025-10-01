@@ -28,39 +28,42 @@
         <span class="hint">No file yet? A sample will load automatically.</span>
       </section>
 
-      <section class="table-card">
-        <div class="table-wrapper">
-          <table id="dividends-table" class="styled-table">
-            <thead>
-              <tr>
-                <th data-key="Ticker" class="sortable">Ticker</th>
-                <th data-key="Ticker Name" class="sortable">Ticker Name</th>
-                <th data-key="Number of Shares" class="sortable">Number of Shares</th>
-                <th data-key="Payment Date" class="sortable">Payment Date</th>
-                <th data-key="Value" class="sortable">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Rows will be injected here -->
-            </tbody>
-          </table>
-        </div>
-        <div class="pagination-bar">
-          <div class="page-size">
-            <label for="page-size-select">Rows per page</label>
-            <select id="page-size-select">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-            </select>
+      <details class="accordion" open>
+        <summary>All dividend transactions</summary>
+        <section class="table-card">
+          <div class="table-wrapper">
+            <table id="dividends-table" class="styled-table">
+              <thead>
+                <tr>
+                  <th data-key="Ticker" class="sortable">Ticker</th>
+                  <th data-key="Ticker Name" class="sortable">Ticker Name</th>
+                  <th data-key="Number of Shares" class="sortable">Number of Shares</th>
+                  <th data-key="Payment Date" class="sortable">Payment Date</th>
+                  <th data-key="Value" class="sortable">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be injected here -->
+              </tbody>
+            </table>
           </div>
-          <div class="pager">
-            <button id="prev-page" class="pager-btn" aria-label="Previous page">Prev</button>
-            <span id="page-info" class="page-info"></span>
-            <button id="next-page" class="pager-btn" aria-label="Next page">Next</button>
+          <div class="pagination-bar">
+            <div class="page-size">
+              <label for="page-size-select">Rows per page</label>
+              <select id="page-size-select">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div class="pager">
+              <button id="prev-page" class="pager-btn" aria-label="Previous page">Prev</button>
+              <span id="page-info" class="page-info"></span>
+              <button id="next-page" class="pager-btn" aria-label="Next page">Next</button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </details>
     </main>
 
     <footer class="app-footer">
