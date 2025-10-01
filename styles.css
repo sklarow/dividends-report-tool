@@ -260,6 +260,23 @@ main.container { padding: 24px 16px 40px; }
 
 .value-positive { color: #22c55e; font-weight: 700; }
 
+/* Special gold gradient for total received (all time) */
+#ov-total {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-size: 200% 200% !important;
+  animation: goldShimmer 3s ease-in-out infinite !important;
+  font-weight: 700 !important;
+  font-size: 28px !important;
+}
+
+@keyframes goldShimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
 .value-multiline {
   display: flex;
   flex-direction: column;

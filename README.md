@@ -166,7 +166,7 @@ Found an issue? [Create a GitHub issue](https://github.com/sklarow/dividends-rep
 
 ## ⚠️ Disclaimer
 
-**Disclaimer:** This is an independent project made by [Allan Sklarow](https://linkedin.com/in/sklarow) and is not affiliated with or endorsed by Trading 212. Your files remain private: all processing is done locally in your browser, and no data is saved or transmitted. [View the source code on GitHub](https://github.com/sklarow/dividends-report-tool)
+**Disclaimer:** This is an independent project made by [Allan Sklarow](https://linkedin.com/in/sklarow) and is not affiliated with or endorsed by Trading 212. Your files remain private: all processing is done locally in your browser, and no data is saved or transmitted. The initial sample data loaded does not reflect real investment data. [View the source code on GitHub](https://github.com/sklarow/dividends-report-tool)
 
 ---
 
