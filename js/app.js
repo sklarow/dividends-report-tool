@@ -17,6 +17,12 @@ const REQUIRED_COLUMNS = [
  * @type {string}
  */
 const INLINE_SAMPLE_CSV = `Action,Time,ISIN,Ticker,Name,No. of shares,Price / share,Currency (Price / share),Exchange rate,Total,Currency (Total),Withholding tax,Currency (Withholding tax)
+Dividend (Dividend),2010-06-15 10:30:00,US0378331005,AAPL,Apple Inc,0.2000000000,0.120000,USD,Not available,0.02,EUR,0.00,USD
+Dividend (Dividend),2010-12-15 10:30:00,US5949181045,MSFT,Microsoft Corp,0.1000000000,0.160000,USD,Not available,0.02,EUR,0.00,USD
+Dividend (Dividend),2013-03-15 10:30:00,US92826C8394,V,Visa Inc,0.1500000000,0.200000,USD,Not available,0.03,EUR,0.01,USD
+Dividend (Dividend),2013-09-15 10:30:00,US1912161007,KO,Coca-Cola Co,0.5000000000,0.280000,USD,Not available,0.14,EUR,0.03,USD
+Dividend (Dividend),2015-01-15 10:30:00,US0378331005,AAPL,Apple Inc,0.3000000000,0.200000,USD,Not available,0.06,EUR,0.01,USD
+Dividend (Dividend),2015-07-15 10:30:00,US5949181045,MSFT,Microsoft Corp,0.2000000000,0.310000,USD,Not available,0.06,EUR,0.01,USD
 Dividend (Dividend),2024-11-15 10:30:00,US0378331005,AAPL,Apple Inc,0.5000000000,0.240000,USD,Not available,0.12,EUR,0.02,USD
 Dividend (Dividend),2024-12-15 10:30:00,US5949181045,MSFT,Microsoft Corp,0.3000000000,0.750000,USD,Not available,0.23,EUR,0.05,USD
 Dividend (Dividend),2025-01-15 10:30:00,US92826C8394,V,Visa Inc,0.2000000000,0.450000,USD,Not available,0.09,EUR,0.02,USD
@@ -87,8 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sumPrev) sumPrev.addEventListener("click", () => { changeSummaryPage(-1); });
   if (sumNext) sumNext.addEventListener("click", () => { changeSummaryPage(1); });
 
-  // Initialize chart (Chart.js is deferred; guard availability)
+  // Initialize charts (Chart.js is deferred; guard availability)
   initChartIfReady();
+  initGrowthChartIfReady();
 });
 
 /**
@@ -110,12 +117,8 @@ function onFileSelected(event) {
  */
 async function loadSampleCsv() {
   try {
-    const response = await fetch("./dividends.csv", { cache: "no-store" });
-    if (!response.ok) throw new Error("Sample CSV not found");
-    const text = await response.text();
-    parseCsvAndRender(text);
-  } catch (err) {
     parseCsvAndRender(INLINE_SAMPLE_CSV);
+  } catch (err) {
   }
 }
 
@@ -151,6 +154,10 @@ function parseCsvAndRender(csvText) {
   summaryState.page = 1;
   applySummarySort();
   renderSummary();
+
+  // Update charts
+  updateChart();
+  updateGrowthChart();
 }
 
 /**
@@ -337,6 +344,7 @@ function render() {
   renderPagination();
   renderOverview();
   updateChart();
+  updateGrowthChart();
 }
 
 // ===== Summary table (by ticker) =====
@@ -603,8 +611,9 @@ function setOverviewText(id, text) {
   if (el) el.textContent = text;
 }
 
-// ===== Payments per month chart =====
+// ===== Payments charts =====
 let paymentsChart = null;
+let growthChart = null;
 
 function initChartIfReady() {
   if (!window.Chart) return;
@@ -710,6 +719,186 @@ function updateChart() {
     };
   }
   paymentsChart.update();
+}
+
+function initGrowthChartIfReady() {
+  if (!window.Chart) return;
+  const ctx = document.getElementById('growth-chart');
+  if (!ctx) return;
+  if (growthChart) return;
+  growthChart = new window.Chart(ctx, {
+    type: 'line',
+    data: { 
+      labels: [], 
+      datasets: [{ 
+        label: 'Cumulative', 
+        data: [], 
+        borderColor: 'rgba(79,140,255,0.9)', 
+        backgroundColor: 'rgba(79,140,255,0.15)', 
+        fill: true, 
+        tension: 0.25,
+        pointBackgroundColor: 'rgba(79,140,255,0.9)',
+        pointBorderColor: 'rgba(79,140,255,0.9)',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }] 
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: 10, right: 8, bottom: 8, left: 8 } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' } },
+      },
+      plugins: { legend: { display: false } },
+    },
+  });
+}
+
+function updateGrowthChart() {
+  initGrowthChartIfReady();
+  if (!growthChart) return;
+  const rows = tableState.rows;
+  if (!rows || rows.length === 0) {
+    growthChart.data.labels = [];
+    growthChart.data.datasets[0].data = [];
+    growthChart.update();
+    return;
+  }
+
+  const currency = rows.find((r) => r['_Currency'])?._Currency || '';
+  const symbol = window.Utils.currencySymbolFrom(currency);
+
+  function parseDisplayDate(s) {
+    const m = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    if (!m) return NaN;
+    return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5])).getTime();
+  }
+
+  // Build month buckets from first payment month to current month
+  const timestamps = rows
+    .map((r) => parseDisplayDate(r['Payment Date']))
+    .filter((t) => Number.isFinite(t))
+    .sort((a, b) => a - b);
+  
+  if (timestamps.length === 0) {
+    console.log('No valid timestamps found for growth chart');
+    growthChart.data.labels = [];
+    growthChart.data.datasets[0].data = [];
+    growthChart.update();
+    return;
+  }
+  
+  const first = new Date(timestamps[0]);
+  const today = new Date();
+  
+  // Calculate total months span
+  const totalMonths = (today.getFullYear() - first.getFullYear()) * 12 + 
+                     (today.getMonth() - first.getMonth()) + 1;
+  
+  // Determine grouping strategy based on total months
+  let groupSize, labelFormat;
+  if (totalMonths <= 12) {
+    groupSize = 1; // Monthly
+    labelFormat = 'MM/YYYY';
+  } else if (totalMonths <= 36) {
+    groupSize = 3; // Quarterly
+    labelFormat = 'Q YYYY';
+  } else if (totalMonths <= 72) {
+    groupSize = 6; // Semi-annually
+    labelFormat = 'MM/YYYY';
+  } else {
+    groupSize = 12; // Annually
+    labelFormat = 'YYYY';
+  }
+
+  const labels = [];
+  const keyToIndex = new Map();
+  const sums = [];
+  
+  function keyFor(d) { 
+    if (groupSize === 1) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    } else if (groupSize === 3) {
+      const quarter = Math.floor(d.getMonth() / 3) + 1;
+      return `${d.getFullYear()}-Q${quarter}`;
+    } else if (groupSize === 6) {
+      const half = Math.floor(d.getMonth() / 6) + 1;
+      return `${d.getFullYear()}-H${half}`;
+    } else {
+      return `${d.getFullYear()}`;
+    }
+  }
+  
+  function labelFor(d) { 
+    if (groupSize === 1) {
+      return `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    } else if (groupSize === 3) {
+      const quarter = Math.floor(d.getMonth() / 3) + 1;
+      return `Q${quarter} ${d.getFullYear()}`;
+    } else if (groupSize === 6) {
+      const half = Math.floor(d.getMonth() / 6) + 1;
+      const month = half === 1 ? '06' : '12';
+      return `${month}/${d.getFullYear()}`;
+    } else {
+      return `${d.getFullYear()}`;
+    }
+  }
+  
+  // Iterate groups from first to today
+  const cursor = new Date(first.getFullYear(), first.getMonth(), 1);
+  const end = new Date(today.getFullYear(), today.getMonth(), 1);
+  
+  while (cursor <= end) {
+    const key = keyFor(cursor);
+    if (!keyToIndex.has(key)) {
+      keyToIndex.set(key, labels.length);
+      labels.push(labelFor(cursor));
+      sums.push(0);
+    }
+    cursor.setMonth(cursor.getMonth() + groupSize);
+  }
+
+  // Sum values into group buckets
+  for (const r of rows) {
+    const t = parseDisplayDate(r['Payment Date']);
+    if (!Number.isFinite(t)) continue;
+    const d = new Date(t);
+    const key = keyFor(d);
+    const idx = keyToIndex.get(key);
+    if (idx == null) continue;
+    const amt = window.Utils.numberFromMixedString(r['Value']);
+    if (Number.isNaN(amt)) continue;
+    sums[idx] += amt;
+  }
+
+  // Turn into cumulative
+  let running = 0;
+  const cumulative = sums.map((n) => { running += n; return Number(running.toFixed(2)); });
+  
+  console.log('Growth chart data:', { 
+    totalMonths, 
+    groupSize, 
+    labelFormat, 
+    labels, 
+    cumulative, 
+    sums 
+  });
+  
+  growthChart.data.labels = labels;
+  growthChart.data.datasets[0].data = cumulative;
+  
+  // Fix the callback to avoid circular reference
+  if (growthChart.options.scales && growthChart.options.scales.y) {
+    growthChart.options.scales.y.ticks = {
+      callback: function(value) {
+        return `${symbol ? symbol + ' ' : ''}${Number(value).toFixed(0)}`;
+      }
+    };
+  }
+  
+  growthChart.update();
 }
 
 
