@@ -27,7 +27,20 @@
         <input id="file-input" type="file" accept=".csv,text/csv" />
         <span class="hint">No file yet? A sample will load automatically.</span>
       </section>
-
+      <section class="overview-card">
+        <div class="overview-header">
+          <span class="overview-emoji" aria-hidden="true">📊</span>
+          <h2>Payments Overview</h2>
+        </div>
+        <div class="overview-grid">
+          <div class="metric"><div class="label">First payment date</div><div id="ov-first" class="value">—</div></div>
+          <div class="metric"><div class="label">Last payment date</div><div id="ov-last" class="value">—</div></div>
+          <div class="metric"><div class="label">Total payments</div><div id="ov-count" class="value">—</div></div>
+          <div class="metric center"><div class="label">Total received</div><div id="ov-total" class="value">—</div></div>
+          <div class="metric center"><div class="label">Average payment</div><div id="ov-avg" class="value">—</div></div>
+          <div class="metric"><div class="label">Largest payment</div><div id="ov-max" class="value">—</div></div>
+        </div>
+      </section>
       <details class="accordion" open>
         <summary>All dividend transactions</summary>
         <section class="table-card">

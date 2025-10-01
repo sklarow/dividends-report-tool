@@ -290,6 +290,103 @@ function render() {
   renderTable(pageRows);
   renderHeaderInteractions();
   renderPagination();
+  renderOverview();
+}
+
+/**
+ * Compute and render Payments Overview metrics using all rows (not paginated slice).
+ */
+function renderOverview() {
+  const rows = tableState.rows; // already sorted if requested
+  if (!rows || rows.length === 0) {
+    setOverviewText('ov-first', '—');
+    setOverviewText('ov-last', '—');
+    setOverviewText('ov-count', '0');
+    setOverviewText('ov-total', '—');
+    setOverviewText('ov-avg', '—');
+    setOverviewText('ov-max', '—');
+    return;
+  }
+
+  // Parse dates back to timestamps for first/last
+  function parseDisplayDate(s) {
+    const m = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    if (!m) return NaN;
+    return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5])).getTime();
+  }
+
+  const timestamps = rows
+    .map((r) => ({ t: parseDisplayDate(r['Payment Date']), row: r }))
+    .filter((x) => Number.isFinite(x.t))
+    .sort((a, b) => a.t - b.t);
+
+  const first = timestamps[0];
+  const last = timestamps[timestamps.length - 1];
+
+  // Totals
+  let totalAmount = 0;
+  let count = 0;
+  let maxPayment = { amount: -Infinity, row: null };
+  for (const r of rows) {
+    const num = window.Utils.numberFromMixedString(r['Value']);
+    if (Number.isNaN(num)) continue;
+    count += 1;
+    totalAmount += num;
+    if (num > maxPayment.amount) maxPayment = { amount: num, row: r };
+  }
+  const avg = count > 0 ? totalAmount / count : 0;
+
+  // Currency symbol: prefer first row's currency (assumes consistent file currency)
+  const currency = rows.find((r) => r['_Currency'])?._Currency || '';
+  const symbol = window.Utils.currencySymbolFrom(currency);
+  const money = (n) => `${symbol ? symbol + ' ' : ''}${n.toFixed(2)}`;
+
+  setOverviewText('ov-first', first ? first.row['Payment Date'] : '—');
+  setOverviewText('ov-last', last ? last.row['Payment Date'] : '—');
+  setOverviewText('ov-count', String(count));
+  const totalEl = document.getElementById('ov-total');
+  if (totalEl) {
+    totalEl.textContent = count > 0 ? money(totalAmount) : '—';
+    totalEl.classList.toggle('value-positive', count > 0);
+  }
+  setOverviewText('ov-avg', count > 0 ? money(avg) : '—');
+  if (maxPayment.row) {
+    const ticker = maxPayment.row['Ticker'] || '';
+    const name = maxPayment.row['Ticker Name'] || '';
+    const when = maxPayment.row['Payment Date'] || '';
+    const maxEl = document.getElementById('ov-max');
+    if (maxEl) {
+      maxEl.innerHTML = '';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'value-multiline';
+      const v1 = document.createElement('div');
+      v1.textContent = money(maxPayment.amount);
+      const v2 = document.createElement('div');
+      v2.textContent = ticker;
+      const v3 = document.createElement('div');
+      v3.className = 'sub';
+      v3.textContent = name;
+      const v4 = document.createElement('div');
+      v4.textContent = when;
+      wrapper.appendChild(v1);
+      wrapper.appendChild(v2);
+      wrapper.appendChild(v3);
+      wrapper.appendChild(v4);
+      maxEl.appendChild(wrapper);
+    }
+  } else {
+    setOverviewText('ov-max', '—');
+  }
+}
+
+/**
+ * Helper to set overview text content safely.
+ * @param {string} id
+ * @param {string} text
+ */
+function setOverviewText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
 }
 
 
