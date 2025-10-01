@@ -182,6 +182,7 @@ main.container { padding: 24px 16px 40px; }
 .accordion {
   background: transparent;
   border: none;
+  margin-top: 24px;
 }
 
 .accordion > summary {
