@@ -16,7 +16,13 @@ const REQUIRED_COLUMNS = [
  * Inline fallback sample when local fetch is not available.
  * @type {string}
  */
-const INLINE_SAMPLE_CSV = `Ticker,Ticker Name,Number of Shares,Payment Date,Value\nAAPL,Apple Inc,10,2025-08-15,5.40\nMSFT,Microsoft Corp,8,2025-08-20,4.16\nV,Visa Inc,5,2025-09-02,2.85\nKO,Coca-Cola Co,20,2025-09-10,3.40`;
+const INLINE_SAMPLE_CSV = `Action,Time,ISIN,Ticker,Name,No. of shares,Price / share,Currency (Price / share),Exchange rate,Total,Currency (Total),Withholding tax,Currency (Withholding tax)
+Dividend (Dividend),2024-01-15 10:30:00,US0378331005,AAPL,Apple Inc,0.5000000000,0.240000,USD,Not available,0.12,EUR,0.02,USD
+Dividend (Dividend),2024-02-15 10:30:00,US5949181045,MSFT,Microsoft Corp,0.3000000000,0.750000,USD,Not available,0.23,EUR,0.05,USD
+Dividend (Dividend),2024-03-15 10:30:00,US92826C8394,V,Visa Inc,0.2000000000,0.450000,USD,Not available,0.09,EUR,0.02,USD
+Dividend (Dividend),2024-04-15 10:30:00,US1912161007,KO,Coca-Cola Co,1.0000000000,0.460000,USD,Not available,0.46,EUR,0.09,USD
+Dividend (Dividend),2024-05-15 10:30:00,US0378331005,AAPL,Apple Inc,0.5000000000,0.240000,USD,Not available,0.12,EUR,0.02,USD
+Dividend (Dividend),2024-06-15 10:30:00,US5949181045,MSFT,Microsoft Corp,0.3000000000,0.750000,USD,Not available,0.23,EUR,0.05,USD`;
 
 /**
  * Global table state for sorting and pagination.
