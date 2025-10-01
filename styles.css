@@ -96,6 +96,16 @@ main.container { padding: 24px 16px 40px; }
   border-bottom: 1px solid var(--border);
 }
 
+.styled-table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.styled-table thead th.sortable .sort-indicator {
+  margin-left: 6px;
+  color: var(--muted);
+}
+
 .styled-table tbody td {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
@@ -104,6 +114,42 @@ main.container { padding: 24px 16px 40px; }
 .styled-table tbody tr:nth-child(even) { background: var(--row-alt); }
 
 .styled-table tbody tr:hover { background: rgba(79, 140, 255, 0.08); }
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 14px;
+}
+
+.page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pager-btn {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-info { color: var(--muted); }
 
 .app-footer {
   border-top: 1px solid var(--border);

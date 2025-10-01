@@ -10,12 +10,36 @@ const REQUIRED_COLUMNS = [
 
 const INLINE_SAMPLE_CSV = `Ticker,Ticker Name,Number of Shares,Payment Date,Value\nAAPL,Apple Inc,10,2025-08-15,5.40\nMSFT,Microsoft Corp,8,2025-08-20,4.16\nV,Visa Inc,5,2025-09-02,2.85\nKO,Coca-Cola Co,20,2025-09-10,3.40`;
 
+// In-memory table state
+const tableState = {
+  rawRows: [],
+  rows: [],
+  sortKey: null,
+  sortDir: "asc", // or "desc"
+  page: 1,
+  pageSize: 10,
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("file-input");
   input.addEventListener("change", onFileSelected);
 
   // Load sample CSV initially
   loadSampleCsv();
+
+  // Pagination controls
+  const pageSizeSelect = document.getElementById("page-size-select");
+  const prevBtn = document.getElementById("prev-page");
+  const nextBtn = document.getElementById("next-page");
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", () => {
+      tableState.pageSize = Number(pageSizeSelect.value);
+      tableState.page = 1;
+      render();
+    });
+  }
+  if (prevBtn) prevBtn.addEventListener("click", () => { changePage(-1); });
+  if (nextBtn) nextBtn.addEventListener("click", () => { changePage(1); });
 });
 
 function formatDateDisplay(input) {
@@ -112,7 +136,10 @@ function parseCsvAndRender(csvText) {
 
   const rows = result.data || [];
   const normalizedRows = rows.map(normalizeRowKeys);
-  renderTable(normalizedRows);
+  tableState.rawRows = normalizedRows;
+  tableState.page = 1;
+  applySort();
+  render();
 }
 
 function normalizeRowKeys(row) {
@@ -176,6 +203,119 @@ function renderTable(rows) {
     }
     tbody.appendChild(tr);
   }
+}
+
+function applySort() {
+  const { sortKey, sortDir } = tableState;
+  const rows = [...tableState.rawRows];
+  if (!sortKey) {
+    tableState.rows = rows;
+    return;
+  }
+  const dir = sortDir === "desc" ? -1 : 1;
+
+  function toComparable(col, val) {
+    if (col === "Payment Date") {
+      // convert dd/mm/yyyy HH:MM to timestamp for sorting
+      const m = String(val).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      if (m) {
+        const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5]));
+        return d.getTime();
+      }
+    }
+    if (col === "Number of Shares" || col === "Value") {
+      const num = Number(String(val).replace(/[^0-9.-]/g, ""));
+      if (!Number.isNaN(num)) return num;
+    }
+    const s = String(val || "").toLowerCase();
+    return s;
+  }
+
+  rows.sort((a, b) => {
+    const av = toComparable(sortKey, a[sortKey]);
+    const bv = toComparable(sortKey, b[sortKey]);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+  tableState.rows = rows;
+}
+
+function renderHeaderInteractions() {
+  const ths = document.querySelectorAll('#dividends-table thead th.sortable');
+  ths.forEach((th) => {
+    th.removeEventListener("click", th._sortHandler || (() => {}));
+    const handler = () => {
+      const key = th.getAttribute('data-key');
+      if (!key) return;
+      if (tableState.sortKey === key) {
+        tableState.sortDir = tableState.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        tableState.sortKey = key;
+        tableState.sortDir = "asc";
+      }
+      tableState.page = 1;
+      applySort();
+      render();
+    };
+    th._sortHandler = handler;
+    th.addEventListener("click", handler);
+
+    // Add visual indicator
+    let label = th.querySelector('.sort-label');
+    if (!label) {
+      const span = document.createElement('span');
+      span.className = 'sort-indicator';
+      th.appendChild(span);
+    }
+  });
+  // Update indicator text
+  ths.forEach((th) => {
+    const span = th.querySelector('.sort-indicator');
+    if (!span) return;
+    const key = th.getAttribute('data-key');
+    if (tableState.sortKey === key) {
+      span.textContent = tableState.sortDir === 'asc' ? '▲' : '▼';
+    } else {
+      span.textContent = '';
+    }
+  });
+}
+
+function changePage(delta) {
+  const total = tableState.rows.length;
+  const lastPage = Math.max(1, Math.ceil(total / tableState.pageSize));
+  const next = Math.min(lastPage, Math.max(1, tableState.page + delta));
+  if (next !== tableState.page) {
+    tableState.page = next;
+    render();
+  }
+}
+
+function renderPagination() {
+  const total = tableState.rows.length;
+  const lastPage = Math.max(1, Math.ceil(total / tableState.pageSize));
+  const start = total === 0 ? 0 : (tableState.page - 1) * tableState.pageSize + 1;
+  const end = Math.min(total, tableState.page * tableState.pageSize);
+
+  const info = document.getElementById('page-info');
+  const prev = document.getElementById('prev-page');
+  const next = document.getElementById('next-page');
+  if (info) info.textContent = `${start}-${end} of ${total}`;
+  if (prev) prev.disabled = tableState.page <= 1;
+  if (next) next.disabled = tableState.page >= lastPage;
+}
+
+function render() {
+  // Determine slice
+  const total = tableState.rows.length;
+  const startIdx = (tableState.page - 1) * tableState.pageSize;
+  const endIdx = Math.min(total, startIdx + tableState.pageSize);
+  const pageRows = tableState.rows.slice(startIdx, endIdx);
+
+  renderTable(pageRows);
+  renderHeaderInteractions();
+  renderPagination();
 }
 
 

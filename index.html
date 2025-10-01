@@ -32,17 +32,32 @@
           <table id="dividends-table" class="styled-table">
             <thead>
               <tr>
-                <th>Ticker</th>
-                <th>Ticker Name</th>
-                <th>Number of Shares</th>
-                <th>Payment Date</th>
-                <th>Value</th>
+                <th data-key="Ticker" class="sortable">Ticker</th>
+                <th data-key="Ticker Name" class="sortable">Ticker Name</th>
+                <th data-key="Number of Shares" class="sortable">Number of Shares</th>
+                <th data-key="Payment Date" class="sortable">Payment Date</th>
+                <th data-key="Value" class="sortable">Value</th>
               </tr>
             </thead>
             <tbody>
               <!-- Rows will be injected here -->
             </tbody>
           </table>
+        </div>
+        <div class="pagination-bar">
+          <div class="page-size">
+            <label for="page-size-select">Rows per page</label>
+            <select id="page-size-select">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <div class="pager">
+            <button id="prev-page" class="pager-btn" aria-label="Previous page">Prev</button>
+            <span id="page-info" class="page-info"></span>
+            <button id="next-page" class="pager-btn" aria-label="Next page">Next</button>
+          </div>
         </div>
       </section>
     </main>
