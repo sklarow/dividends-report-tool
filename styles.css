@@ -69,6 +69,16 @@ main.container { padding: 24px 16px 40px; }
 #file-input { display: none; }
 
 .hint { color: var(--muted); font-size: 14px; }
+.hint a { 
+  color: #22c55e; 
+  text-decoration: none; 
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+.hint a:hover { 
+  color: #16a34a; 
+  text-decoration: underline;
+}
 
 .table-card {
   background: var(--card);
