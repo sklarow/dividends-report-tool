@@ -259,8 +259,9 @@ main.container { padding: 24px 16px 40px; }
   border: 1px solid var(--border);
   border-radius: 14px;
   margin: 16px 0;
+  padding: 16px;
 }
-.chart-wrapper { padding: 12px 14px 16px; }
+.chart-wrapper { padding: 0; }
 
 @media (max-width: 640px) {
   .app-header h1 { font-size: 22px; }

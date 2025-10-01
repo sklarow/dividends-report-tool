@@ -609,7 +609,10 @@ function initChartIfReady() {
         x: { grid: { display: false } },
         y: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { callback: (v) => v } },
       },
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true }
+      },
     },
   });
 }
@@ -681,6 +684,14 @@ function updateChart() {
   paymentsChart.data.labels = labels;
   paymentsChart.data.datasets[0].data = sums.map((n) => Number(n.toFixed(2)));
   paymentsChart.options.scales.y.ticks.callback = (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(0)}`;
+  // Add bold green value labels on top of bars
+  paymentsChart.options.plugins.datalabels = {
+    color: '#22c55e',
+    anchor: 'end',
+    align: 'end',
+    formatter: (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(2)}`,
+    font: { weight: '700' }
+  };
   paymentsChart.update();
 }
 
