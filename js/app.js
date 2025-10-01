@@ -46,8 +46,8 @@ const tableState = {
 const summaryState = {
   rawRows: [],
   rows: [],
-  sortKey: null,
-  sortDir: "asc",
+  sortKey: "Total Payments",
+  sortDir: "desc",
   page: 1,
   pageSize: 10,
 };
