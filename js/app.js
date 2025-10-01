@@ -596,6 +596,10 @@ let paymentsChart = null;
 
 function initChartIfReady() {
   if (!window.Chart) return;
+  // Register datalabels plugin if present (needed for labels to show)
+  if (window.ChartDataLabels) {
+    try { window.Chart.register(window.ChartDataLabels); } catch (_) {}
+  }
   const ctx = document.getElementById('payments-chart');
   if (!ctx) return;
   if (paymentsChart) return;
@@ -685,13 +689,16 @@ function updateChart() {
   paymentsChart.data.datasets[0].data = sums.map((n) => Number(n.toFixed(2)));
   paymentsChart.options.scales.y.ticks.callback = (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(0)}`;
   // Add bold green value labels on top of bars
-  paymentsChart.options.plugins.datalabels = {
-    color: '#22c55e',
-    anchor: 'end',
-    align: 'end',
-    formatter: (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(2)}`,
-    font: { weight: '700' }
-  };
+  // Only set datalabels if plugin is available
+  if (window.ChartDataLabels) {
+    paymentsChart.options.plugins.datalabels = {
+      color: '#22c55e',
+      anchor: 'end',
+      align: 'end',
+      formatter: (v) => `${symbol ? symbol + ' ' : ''}${Number(v).toFixed(2)}`,
+      font: { weight: '700' }
+    };
+  }
   paymentsChart.update();
 }
 
