@@ -115,12 +115,16 @@ function parseCsvAndRender(csvText) {
  */
 function normalizeRowKeys(row) {
   const map = window.Utils.buildHeaderMap(Object.keys(row));
+  // Prefer exact header 'Currency (Total)' if present in data
+  const exactCurrencyTotalKey = Object.keys(row).find((k) => String(k).trim().toLowerCase() === 'currency (total)');
+  const currencyRaw = exactCurrencyTotalKey ? row[exactCurrencyTotalKey] : (row[map.currency] ?? "");
   return {
     "Ticker": row[map.ticker] ?? "",
     "Ticker Name": row[map.name] ?? "",
     "Number of Shares": row[map.shares] ?? "",
     "Payment Date": window.Utils.formatDateDisplay(row[map.date] ?? ""),
     "Value": row[map.value] ?? "",
+    "_Currency": currencyRaw,
   };
 }
 
@@ -150,7 +154,11 @@ function renderTable(rows) {
       let value = row[col] ?? "";
       if (col === "Value" && typeof value === "string" && value !== "") {
         const num = window.Utils.numberFromMixedString(value);
-        if (!Number.isNaN(num)) value = num.toFixed(2);
+        const symbol = window.Utils.currencySymbolFrom(row["_Currency"]);
+        if (!Number.isNaN(num)) {
+          const formatted = num.toFixed(2);
+          value = symbol ? `${symbol} ${formatted}` : formatted;
+        }
       }
       td.textContent = value;
       tr.appendChild(td);

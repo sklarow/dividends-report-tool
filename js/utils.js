@@ -1,5 +1,34 @@
 // Utilities shared across the dividend table app
 
+// Common currency symbol mapping by code and common names
+const CURRENCY_SYMBOLS = {
+  usd: "$",
+  eur: "€",
+  gbp: "£",
+  jpy: "¥",
+  cny: "¥",
+  hkd: "HK$",
+  chf: "CHF",
+  cad: "CA$",
+  aud: "A$",
+  nzd: "NZ$",
+  sek: "kr",
+  nok: "kr",
+  dkk: "kr",
+  pln: "zł",
+  czk: "Kč",
+  huf: "Ft",
+  zar: "R",
+  brl: "R$",
+  mxn: "MX$",
+  inr: "₹",
+  sgd: "S$",
+  krw: "₩",
+  try: "₺",
+  rub: "₽",
+  ils: "₪",
+};
+
 /**
  * Convert various date string inputs into display format dd/mm/yyyy HH:MM.
  * Accepts YYYY-MM-DD[, HH:MM[:SS]] and generic Date-parseable strings.
@@ -80,6 +109,13 @@ function buildHeaderMap(headers) {
     shares: find("number of shares", "no. of shares", "shares"),
     date: find("payment date", "date", "time"),
     value: find("value", "amount", "total", "total (gbp)", "gross amount"),
+    // Prefer the model column "Currency (Total)", with robust fallbacks
+    currency: find(
+      "currency (total)",
+      "currency",
+      "currency (withholding tax)",
+      "currency (price / share)"
+    ),
   };
 }
 
@@ -93,7 +129,49 @@ function numberFromMixedString(input) {
   return Number(String(input).replace(/[^0-9.-]/g, ""));
 }
 
+/**
+ * Given a currency code or name (e.g., "EUR", "Euro"), return a symbol.
+ * Falls back to the provided input (trimmed) if unknown.
+ * @param {string} codeOrName
+ * @returns {string}
+ */
+function currencySymbolFrom(codeOrName) {
+  const raw = String(codeOrName || "").trim().replace(/^"|"$/g, "");
+  if (!raw) return "";
+  const lc = raw.toLowerCase();
+
+  // Try exact code or common name keys
+  if (CURRENCY_SYMBOLS[lc]) return CURRENCY_SYMBOLS[lc];
+
+  // Map a few common full names to codes
+  const nameToCode = {
+    euro: "eur",
+    dollar: "usd",
+    "us dollar": "usd",
+    "canadian dollar": "cad",
+    "australian dollar": "aud",
+    pound: "gbp",
+    "pound sterling": "gbp",
+    yen: "jpy",
+    yuan: "cny",
+    franc: "chf",
+    rupee: "inr",
+    real: "brl",
+    rand: "zar",
+    peso: "mxn",
+    won: "krw",
+    lira: "try",
+    ruble: "rub",
+    shekel: "ils",
+  };
+  const mapped = nameToCode[lc];
+  if (mapped && CURRENCY_SYMBOLS[mapped]) return CURRENCY_SYMBOLS[mapped];
+
+  // Fallback to the original currency name/code
+  return raw;
+}
+
 // Expose as global utilities to avoid module tooling
-window.Utils = { formatDateDisplay, buildHeaderMap, numberFromMixedString };
+window.Utils = { formatDateDisplay, buildHeaderMap, numberFromMixedString, currencySymbolFrom };
 
 
