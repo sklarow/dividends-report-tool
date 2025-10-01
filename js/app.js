@@ -637,19 +637,12 @@ function updateChart() {
   const currency = rows.find((r) => r['_Currency'])?._Currency || '';
   const symbol = window.Utils.currencySymbolFrom(currency);
 
-  // Build month buckets from first payment month to current month
+  // Build month buckets for last 12 months ending current month
   function parseDisplayDate(s) {
     const m = String(s).match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
     if (!m) return NaN;
     return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]), Number(m[4]), Number(m[5])).getTime();
   }
-  const timestamps = rows
-    .map((r) => parseDisplayDate(r['Payment Date']))
-    .filter((t) => Number.isFinite(t))
-    .sort((a, b) => a - b);
-  if (timestamps.length === 0) return;
-
-  const first = new Date(timestamps[0]);
   const today = new Date();
   const labels = [];
   const keyToIndex = new Map();
@@ -662,8 +655,9 @@ function updateChart() {
     return `${mm}/${yyyy}`;
   }
 
-  // Iterate months from first to today (inclusive)
-  const cursor = new Date(first.getFullYear(), first.getMonth(), 1);
+  // Iterate months from 11 months ago to current month (inclusive)
+  const start = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+  const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
   const end = new Date(today.getFullYear(), today.getMonth(), 1);
   while (cursor <= end) {
     const key = keyFor(cursor);
